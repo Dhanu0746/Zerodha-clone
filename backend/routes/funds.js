@@ -11,5 +11,7 @@ router.post('/withdraw', authMiddleware, fundsController.withdrawFunds);
 
 // Get transaction history
 router.get('/transactions', authMiddleware, fundsController.getTransactions);
+// Get current balance
+router.get('/balance', authMiddleware, fundsController.getBalance);
 
 module.exports = router; 

@@ -11,6 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use("/api/holding", require("./routes/holding"));
+app.use("/api/order", require("./routes/order"));
+app.use("/api/funds", require("./routes/funds"));
+app.use("/api/stock", require("./routes/stock"));
+
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,

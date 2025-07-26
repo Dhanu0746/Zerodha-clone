@@ -1,128 +1,96 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
-import { fetchLivePrice } from '../api/price';
+// components/Watchlist.jsx
+import React, { useState, useEffect } from 'react';
 
 const Watchlist = () => {
-  const [watchlist, setWatchlist] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [symbol, setSymbol] = useState('');
-  const [message, setMessage] = useState('');
-  const [livePrices, setLivePrices] = useState({});
+  const [watchlist, setWatchlist] = useState(() => {
+    const stored = localStorage.getItem('watchlist');
+    return stored ? JSON.parse(stored) : [];
+  });
 
-  const fetchWatchlist = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.get('/watchlist', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setWatchlist(res.data.watchlist || []);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch watchlist');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [prices, setPrices] = useState({});
 
   useEffect(() => {
-    fetchWatchlist();
-  }, []);
-
-  useEffect(() => {
-    // Fetch live prices for all watchlist stocks
-    const fetchAllPrices = async () => {
-      const prices = {};
-      await Promise.all(
-        watchlist.map(async (item) => {
-          try {
-            prices[item.symbol] = await fetchLivePrice(item.symbol);
-          } catch {
-            prices[item.symbol] = 'N/A';
-          }
-        })
-      );
-      setLivePrices(prices);
+    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+    const fetchPrices = async () => {
+      const newPrices = {};
+      for (const stock of watchlist) {
+        try {
+          const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${stock}&apikey=demo`);
+          const data = await res.json();
+          newPrices[stock] = data["Global Quote"]?.["05. price"] || "N/A";
+        } catch (err) {
+          newPrices[stock] = "Error";
+        }
+      }
+      setPrices(newPrices);
     };
-    if (watchlist.length > 0) fetchAllPrices();
+    fetchPrices();
   }, [watchlist]);
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.post('/watchlist', { symbol: symbol.toUpperCase() }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMessage(res.data.message || 'Added to watchlist!');
+  const addStock = () => {
+    if (symbol && !watchlist.includes(symbol.toUpperCase())) {
+      setWatchlist([...watchlist, symbol.toUpperCase()]);
       setSymbol('');
-      fetchWatchlist();
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to add to watchlist');
     }
   };
 
-  const handleRemove = async (id) => {
-    setMessage('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.delete(`/watchlist/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMessage(res.data.message || 'Removed from watchlist!');
-      fetchWatchlist();
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to remove from watchlist');
-    }
+  const removeStock = (stock) => {
+    setWatchlist(watchlist.filter((s) => s !== stock));
   };
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-2 text-center">Watchlist</h2>
-      <form onSubmit={handleAdd} className="flex gap-2 mb-4 items-center justify-center">
+      <h2 className="text-xl font-bold mb-4 text-gray-700">📋 Watchlist</h2>
+      <div className="flex gap-2 mb-4">
         <input
           type="text"
+          className="border px-3 py-2 rounded w-full"
+          placeholder="Enter stock symbol (e.g. AAPL)"
           value={symbol}
-          onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-          placeholder="Add Symbol (e.g. AAPL)"
-          className="px-3 py-2 border rounded"
-          required
+          onChange={(e) => setSymbol(e.target.value)}
         />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button
+          onClick={addStock}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
           Add
         </button>
-      </form>
-      {message && <div className="text-center text-sm font-medium text-green-700 mb-2">{message}</div>}
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : error ? (
-        <div className="text-red-600 text-center">{error}</div>
-      ) : watchlist.length === 0 ? (
-        <div className="text-center text-gray-500">No stocks in watchlist.</div>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {watchlist.map((item) => (
-            <li key={item._id} className="flex justify-between items-center py-2 px-2">
-              <span className="font-semibold">{item.symbol}</span>
-              <span className="ml-4 text-blue-700 font-semibold">
-                {livePrices[item.symbol] !== undefined ?
-                  (livePrices[item.symbol] === 'N/A' ? 'N/A' : `₹${livePrices[item.symbol]}`)
-                  : '...'}
-              </span>
-              <button
-                onClick={() => handleRemove(item._id)}
-                className="text-red-600 hover:underline text-sm ml-4"
-              >
-                Remove
-              </button>
-            </li>
+      </div>
+      <table className="w-full border">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Symbol</th>
+            <th className="border p-2">Live Price</th>
+            <th className="border p-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {watchlist.map((stock) => (
+            <tr key={stock}>
+              <td className="border p-2">{stock}</td>
+              <td className="border p-2">₹{prices[stock]}</td>
+              <td className="border p-2 text-center">
+                <button
+                  onClick={() => removeStock(stock)}
+                  className="text-red-600 hover:underline"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
           ))}
-        </ul>
-      )}
+          {watchlist.length === 0 && (
+            <tr>
+              <td colSpan="3" className="text-center p-4 text-gray-500">
+                No stocks in watchlist.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default Watchlist; 
+export default Watchlist;

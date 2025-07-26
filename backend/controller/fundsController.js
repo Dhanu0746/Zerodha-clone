@@ -53,3 +53,13 @@ exports.getTransactions = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 }; 
+
+// Get current balance
+exports.getBalance = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    res.json({ balance: user.balance || 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

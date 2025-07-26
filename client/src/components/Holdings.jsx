@@ -1,93 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
-import { fetchLivePrice } from '../api/price';
+import axios from 'axios';
 
 const Holdings = () => {
   const [holdings, setHoldings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
     const fetchHoldings = async () => {
-      setLoading(true);
-      setError('');
+      const token = localStorage.getItem('token'); // ✅ Define token here
       try {
-        const token = localStorage.getItem('token');
-        const res = await api.get('/holding', {
+        const response = await axios.get('http://localhost:5000/api/holding', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setHoldings(res.data.holdings || []);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch holdings');
-      } finally {
-        setLoading(false);
+
+        console.log("Holdings response:", response.data);
+        setHoldings(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching holdings:', error);
+        setHoldings([]);
       }
     };
+
     fetchHoldings();
   }, []);
 
-  useEffect(() => {
-    // Fetch live prices for all holdings
-    const fetchAllPrices = async () => {
-      const prices = {};
-      await Promise.all(
-        holdings.map(async (h) => {
-          try {
-            prices[h.symbol] = await fetchLivePrice(h.symbol);
-          } catch {
-            prices[h.symbol] = 'N/A';
-          }
-        })
-      );
-      setLivePrices(prices);
-    };
-    if (holdings.length > 0) fetchAllPrices();
-  }, [holdings]);
-
   return (
-    <div>
-      <h2 className="text-lg font-bold mb-2 text-center">Your Holdings</h2>
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : error ? (
-        <div className="text-red-600 text-center">{error}</div>
-      ) : holdings.length === 0 ? (
-        <div className="text-center text-gray-500">No holdings found.</div>
+    <div className="min-h-screen bg-gray-50 py-10 px-6">
+      <h2 className="text-2xl font-bold mb-6 text-center">Your Holdings</h2>
+
+      {holdings.length === 0 ? (
+        <div className="text-center text-gray-500 text-lg">
+          No holdings available.
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border rounded">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Stock</th>
-                <th className="py-2 px-4 border-b">Quantity</th>
-                <th className="py-2 px-4 border-b">Avg. Price</th>
-                <th className="py-2 px-4 border-b">Current Value</th>
-                <th className="py-2 px-4 border-b">Live Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {holdings.map((h) => (
-                <tr key={h._id}>
-                  <td className="py-2 px-4 border-b">{h.symbol}</td>
-                  <td className="py-2 px-4 border-b">{h.quantity}</td>
-                  <td className="py-2 px-4 border-b">₹{h.avgPrice}</td>
-                  <td className="py-2 px-4 border-b">₹{h.currentValue}</td>
-                  <td className="py-2 px-4 border-b text-blue-700 font-semibold">
-                    {livePrices[h.symbol] !== undefined ?
-                      (livePrices[h.symbol] === 'N/A' ? 'N/A' : `₹${livePrices[h.symbol]}`)
-                      : '...'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {holdings.map((holding, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-2xl shadow hover:shadow-md transition-all"
+            >
+              <h3 className="text-lg font-semibold mb-2">{holding.symbol}</h3>
+              <p className="text-gray-600">Quantity: {holding.quantity}</p>
+              <p className="text-gray-600">
+                Avg. Price: ₹{holding.averagePrice}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 };
 
-export default Holdings; 
+export default Holdings;
