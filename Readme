@@ -1,0 +1,35 @@
+# Zerodha Clone 🧾📈
+
+A full-stack stock trading web application inspired by Zerodha. Built using the MERN stack with live stock price integration.
+
+## 🚀 Features
+
+- 🔒 User authentication with JWT
+- 📊 Dashboard with stock performance data
+- 💹 Buy/Sell functionality
+- 👁️ Watchlist and holdings
+- 📡 Live stock price integration using Finnhub API
+- 🧠 (Upcoming) AI-based stock recommendation
+
+## 🛠️ Tech Stack
+
+**Frontend**: React, Tailwind CSS, React Router  
+**Backend**: Node.js, Express.js, MongoDB, JWT  
+**APIs**: Finnhub API  
+**Version Control**: Git, GitHub
+
+## 📦 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Dhanu0746/Zerodha-clone.git
+
+# Frontend
+cd frontend
+npm install
+npm start
+
+# Backend
+cd backend
+npm install
+npm start
