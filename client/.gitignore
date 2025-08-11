@@ -22,3 +22,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+build
+.cache
+.next
+out
+
+# OS files
+Thumbs.db
+
+# Optional for yarn/pnpm/npm lock files (if you don't want them tracked)
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml

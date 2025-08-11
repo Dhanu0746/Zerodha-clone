@@ -1,25 +1,41 @@
 const User = require('../models/User');
+const Holding = require('../models/Holding');
+const Order = require('../models/Order');
 
-// Get user profile
-exports.getProfile = async (req, res) => {
+exports.getDashboard = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId).select('balance');
+    const holdings = await Holding.find({ user: userId });
+    
+    // Get open orders specifically
+    const openOrders = await Order.find({ 
+      user: userId, 
+      status: { $in: ['open', 'partial'] } 
+    }).sort({ createdAt: -1 });
+    
+    // Get recent orders (all statuses)
+    const recentOrders = await Order.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Calculate portfolio value
+    const portfolioValue = holdings.reduce((total, holding) => {
+      return total + (holding.quantity * holding.avgPrice);
+    }, 0);
+
+    res.status(200).json({
+      balance: user?.balance || 0,
+      availableBalance: user?.balance || 0,
+      portfolioValue,
+      totalValue: (user?.balance || 0) + portfolioValue,
+      holdings,
+      openOrders,
+      recentOrders
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Dashboard error:', err);
+    res.status(500).json({ error: 'Failed to load dashboard data' });
   }
 };
-
-// Update user profile
-exports.updateProfile = async (req, res) => {
-  try {
-    const updates = req.body;
-    delete updates.password; // Prevent password change here
-    const user = await User.findByIdAndUpdate(req.user.userId, updates, { new: true, select: '-password' });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}; 

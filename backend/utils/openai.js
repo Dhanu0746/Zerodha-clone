@@ -1,13 +1,12 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 const askAI = async (prompt) => {
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: 'You are a helpful trading assistant. Give clear, concise, and actionable advice for stock trading questions.' },
@@ -16,11 +15,11 @@ const askAI = async (prompt) => {
       max_tokens: 200,
       temperature: 0.7,
     });
-    return completion.data.choices[0].message.content.trim();
+    return completion.choices[0].message.content.trim();
   } catch (err) {
     console.error('OpenAI API error:', err.message);
     return 'Sorry, I could not process your request right now.';
   }
 };
 
-module.exports = { askAI }; 
+module.exports = { askAI };
