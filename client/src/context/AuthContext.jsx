@@ -4,19 +4,35 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate login for now
   useEffect(() => {
-    const mockUser = {
-      id: "user123",
-      name: "John Doe",
-      email: "john@example.com",
-    };
-    setUser(mockUser);
+    // Check for existing token and validate it
+    const token = localStorage.getItem('token');
+    if (token) {
+      // You can add token validation here if needed
+      // For now, we'll just set a basic user state
+      setUser({
+        id: "user123",
+        name: "User",
+        email: "user@example.com",
+      });
+    }
+    setLoading(false);
   }, []);
 
+  const login = (userData, token) => {
+    setUser(userData);
+    localStorage.setItem('token', token);
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('token');
+  };
+
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
