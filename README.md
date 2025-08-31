@@ -125,16 +125,7 @@ cd ../client
 npm test
 ```
 
-## 🐳 Docker Deployment
 
-```bash
-# Build and run with Docker Compose
-docker-compose up --build
-```
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgements
 
@@ -142,12 +133,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Finnhub API for market data
 - Various open-source libraries and tools
 
-## 📬 Contact
 
-For any queries or feedback, please reach out to [your.email@example.com](mailto:your.email@example.com)
-
----
-
-<div align="center">
-  Made with ❤️ by Your Name
-</div>
